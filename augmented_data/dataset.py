@@ -23,7 +23,7 @@ def read_dataset_text():
         # 0099 is just completely broken.
         if folder_name in ("0099"):
             continue
-        if folder_name in ("0101", "0102"):
+        if folder_name in ("0090", "0101", "0102"):
             encoding = 'utf-8'
         else:
             encoding = 'iso-8859-1'

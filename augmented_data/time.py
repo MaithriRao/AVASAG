@@ -6,17 +6,27 @@ from enum import Enum
 from collections import defaultdict
 from .utils import has_numbers, replace_multiple
 
+# Exclude 0
+single_sign_minutes = set()
+for i in range(1, 20):
+    single_sign_minutes.add(i)
+
+for i in range(2, 6):
+    single_sign_minutes.add(i * 10) # Tens
+    single_sign_minutes.add(i * 11) # Repdigits
+
+print(f'single_sign_minutes: {single_sign_minutes}')
 
 class TimeData:
     def __init__(self):
         self.hour_str = None
-        self.minute_str = None
-        self.minute_tens_str = None
+        self.minute1_str = None
+        self.minute2_str = None
         self.hour_int = None
         self.minute_int = None
         self.hour_line = None
-        self.minute_line = None
-        self.minute_tens_line = None
+        self.minute1_line = None
+        self.minute2_line = None
         self.hour_is_separate = None
 
     def is_valid(self):
@@ -47,7 +57,7 @@ class TimeData:
         self.hour_line = line_num
 
     def set_minute_mms(self, minute_str, line_num):
-        if self.minute_str is not None and self.minute_tens_str is not None:
+        if self.minute2_str is not None:
             raise Exception('ERROR: minute was already set')
         if minute_str == '':
             raise Exception('ERROR: minute is empty')
@@ -58,26 +68,29 @@ class TimeData:
         if minute_int < 0:
             raise Exception(f'ERROR: minute is negative: {minute_int}')
 
-        # If self.minute_int is None then this function was called for the first time
-        if self.minute_int is None and minute_int <= 12:
-            self.minute_str = minute_str
-            self.minute_line = line_num
+        if self.minute1_str is None:
+            if minute_int not in single_sign_minutes:
+                print(f'WARNING: minute1 is not a valid single sign value: {minute_str}')
+            self.minute1_str = minute_str
+            self.minute1_line = line_num
         else:
-            if minute_str not in ['10', '20', '30', '40', '50']:
-                print(f'WARNING: minute_tens is not a valid tens value: {minute_str}')
-            self.minute_tens_str = minute_str
-            self.minute_tens_line = line_num
+            if minute_str not in ['20', '30', '40', '50']:
+                print(f'WARNING: minute2 is not a valid value: {minute_str}')
+            if self.minute_int not in range(1, 10):
+                print(f'WARNING: minute1 is not a valid value: {self.minute1_str}')
+            self.minute2_str = minute_str
+            self.minute2_line = line_num
 
         if self.minute_int is None:
             self.minute_int = 0
         self.minute_int += minute_int
 
     def set_minute_text(self, minute_str):
-        if self.minute_str is not None:
+        if self.minute1_str is not None:
             raise Exception('ERROR: minute was already set')
         if minute_str == '':
             raise Exception('ERROR: minute is empty')
-        self.minute_str = minute_str
+        self.minute1_str = minute_str
         try:
             minute_int = int(minute_str)
         except ValueError:
@@ -93,7 +106,7 @@ class TimeData:
     def get_line_numbers(self):
         if self.hour_line is None:
             raise Exception('ERROR: hour has not been set yet')
-        return (self.hour_line, self.minute_line, self.minute_tens_line)
+        return (self.hour_line, self.minute1_line, self.minute2_line)
 
     def get_time_int(self):
         if self.hour_int is None:
@@ -136,11 +149,11 @@ def replace_time_entities(dataset_text, dataset_mms):
             if not time_data.is_valid():
                 return (state, time_positions)
             # Here we know that the time is valid
-            (hour_line, minute_line, minute_tens_line) = time_data.get_line_numbers()
+            (hour_line, minute1_line, minute2_line) = time_data.get_line_numbers()
             (hour_int, minute_int) = time_data.get_time_int()
             hour_is_separate = time_data.get_hour_is_separate()
-            print(f'Found time: {hour_int}:{minute_int}, lines: {hour_line}, {minute_line}, {minute_tens_line} (file_number: {file_number})')
-            time_position = (hour_line, minute_line, minute_tens_line, hour_int, minute_int, hour_is_separate)
+            print(f'Found time: {hour_int}:{minute_int}, lines: {hour_line}, {minute1_line}, {minute2_line} (file_number: {file_number})')
+            time_position = (hour_line, minute1_line, minute2_line, hour_int, minute_int, hour_is_separate)
             time_positions_list = time_positions.get(file_number, [])
             time_positions_list.append(time_position)
             time_positions[file_number] = time_positions_list
@@ -209,35 +222,35 @@ def replace_time_entities(dataset_text, dataset_mms):
 
         for file_number, time_infos in time_positions.items():
             for time_info in time_infos:
-                (hour_line, minute_line, minute_tens_line, old_hour, old_minute, hour_is_separate) = time_info
+                (hour_line, minute1_line, minute2_line, old_hour, old_minute, hour_is_separate) = time_info
                 old_time = (old_hour, old_minute)
                 if old_time not in time_mappings[file_number]:
                     new_hour = random.randrange(24)
-                    new_minute = None
-                    new_minute_tens = None
-                    if minute_line is not None and minute_tens_line is None:
-                        new_minute = random.randrange(13)
-                    elif minute_line is not None and minute_tens_line is not None:
-                        new_minute = random.randrange(10)
-                    if minute_tens_line is not None:
-                        new_minute_tens = (random.randrange(5)+1)*10 # 10, 20, 30, 40, 50
-                    new_time = (new_hour, new_minute, new_minute_tens)
+                    new_minute1 = None
+                    new_minute2 = None
+                    if minute1_line is not None and minute2_line is None:
+                        new_minute1 = random.choice(tuple(single_sign_minutes))
+                    elif minute1_line is not None and minute2_line is not None:
+                        new_minute1 = random.randrange(1, 10)
+                    if minute2_line is not None:
+                        new_minute2 = random.choice([20, 30, 40, 50])
+                    new_time = (new_hour, new_minute1, new_minute2)
                 else:
                     new_time = time_mappings[file_number][old_time]
 
-                (new_hour, new_minute, new_minute_tens) = new_time
+                (new_hour, new_minute1, new_minute2) = new_time
                 if hour_is_separate:
                     new_hour_str = f'num:{new_hour}'
                 else:
                     new_hour_str = f'uhr:{new_hour}'
                 new_mms_data[hour_line]['maingloss'] = new_hour_str
-                if new_minute is not None:
-                    new_mms_data[minute_line]['maingloss'] = f'num:{new_minute}'
-                if new_minute_tens is not None:
-                    if minute_tens_line < len(new_mms_data):
-                        new_mms_data[minute_tens_line]['maingloss'] = f'num:{new_minute_tens}'
+                if new_minute1 is not None:
+                    new_mms_data[minute1_line]['maingloss'] = f'num:{new_minute1}'
+                if new_minute2 is not None:
+                    if minute2_line < len(new_mms_data):
+                        new_mms_data[minute2_line]['maingloss'] = f'num:{new_minute2}'
                     else:
-                        print(f'WARNING: minute_tens_line {minute_tens_line} not found in file {file_number}')
+                        print(f'WARNING: minute2_line {minute2_line} not found in file {file_number}')
                         for line_num, row in enumerate(new_mms_data):
                             print(f'line {line_num}: {row["maingloss"]}')
 
@@ -287,20 +300,15 @@ def replace_time_entities(dataset_text, dataset_mms):
             if old_time not in time_mapping:
                 print(f'WARNING: old_time {old_time} not found in time_mapping (file: {folder_name})')
                 continue
-            (new_hour, new_minute, new_minute_tens) = time_mapping[old_time]
-            if new_minute is None:
-                new_minute = 0
-            if new_minute_tens is not None:
-                new_minute += new_minute_tens
-            if new_minute is None and new_minute_tens is None and time_format != TimeFormat.JUST_HOUR:
-                print(f'WARNING: new_minute and new_minute_tens are None but time_format is {time_format} (file: {folder_name})')
+            (new_hour, new_minute1, new_minute2) = time_mapping[old_time]
+            if new_minute2 is not None:
+                new_minute1 += new_minute2
+            if new_minute1 is None and new_minute2 is None and time_format != TimeFormat.JUST_HOUR:
+                print(f'WARNING: new_minute1 and new_minute2 are None but time_format is {time_format} (file: {folder_name})')
                 continue
-            new_whole_time = assemble_time(time_format, new_hour, new_minute)
+            new_whole_time = assemble_time(time_format, new_hour, new_minute1)
             whole_time_mapping[old_whole_time] = new_whole_time
             time_mapping_str_to_tuple[old_whole_time] = old_time
-
-        #if folder_name == '0003':
-        #    print(f'whole_time_mapping: {whole_time_mapping}, all_distinct_times_in_file: {all_distinct_times_in_file}')
 
 
         new_text_data = []
