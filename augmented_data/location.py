@@ -22,9 +22,9 @@ def replace_location_entities(dataset_text, dataset_mms):
             'Notbremse', 'Reservierungen','IC 2313','Sonderzug','Rhein'}
 
 
-    for folder_name, file in dataset_text.items():
+    for folder_name, file_content in dataset_text.items():
         file_with_metadata = []
-        for (start_time, end_time, sentence, number) in file:
+        for (start_time, end_time, sentence, number) in file_content:
             sentences_to_analyze = sentence.strip().translate({ord(i): None for i in "„“"})
             # sentences_to_analyze = sentence.strip().replace("„", "").replace("“", "")
             doc = nlp(sentences_to_analyze)
@@ -50,9 +50,9 @@ def replace_location_entities(dataset_text, dataset_mms):
     result_text = {}
     result_mms = {}
 
-    for folder_name, file in dataset_text_with_metadata.items():
+    for folder_name, file_content in dataset_text_with_metadata.items():
         location_counts = {}
-        for line_number, (start_time, end_time, sentence, number, entities) in enumerate(file):
+        for line_number, (start_time, end_time, sentence, number, entities) in enumerate(file_content):
             for (text, label) in entities:
                 if label == 'LOC' and text not in excludes:
                     if 'Hauptbahnhof' in text:
@@ -71,7 +71,7 @@ def replace_location_entities(dataset_text, dataset_mms):
 
 
         new_text_data = []
-        for (start_time, end_time, sentence, number, entities) in file:
+        for (start_time, end_time, sentence, number, entities) in file_content:
             sentence, _ = replace_multiple(sentence, mapping)
             new_text_data.append((start_time, end_time, sentence, number))
         result_text[folder_name] = new_text_data
