@@ -179,7 +179,6 @@ def replace_time_entities(dataset_text, dataset_mms):
                     print(f'WARNING: found number in {word_after_time} after the time (file_number: {file_number})')
                 word_after_time = None
             if state == State.NOT_FOUND:
-                # time_data = recreate object here
                 time_data = TimeData()
                 if word.startswith('num:'):
                     state = State.FIRST_NUM
@@ -280,6 +279,7 @@ def replace_time_entities(dataset_text, dataset_mms):
                     time_data.set_minute_text(minute1)
                     time_format = TimeFormat.WITH_COLON
                 else:
+                    assert minute1 == ''
                     assert hour2 != ''
                     time_data.set_hour(hour2)
                     if minute2 != '':
