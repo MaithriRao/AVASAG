@@ -2,7 +2,7 @@
 
 import re
 import random
-from enum import Enum
+from enum import Enum, verify, UNIQUE
 from collections import defaultdict
 from .utils import has_numbers, replace_multiple
 
@@ -116,6 +116,7 @@ class TimeData:
     def get_hour_is_separate(self):
         return self.hour_is_separate
 
+@verify(UNIQUE)
 class TimeFormat(Enum):
     UNKNOWN = 0
     WITH_COLON = 1 # 18:20 Uhr
@@ -135,6 +136,7 @@ def assemble_time(time_format, hour_int, minute_int):
 
 
 def replace_time_entities(dataset_text, dataset_mms):
+    @verify(UNIQUE)
     class State(Enum):
         NOT_FOUND = 0
         FIRST_NUM = 1

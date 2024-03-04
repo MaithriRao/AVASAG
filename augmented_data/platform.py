@@ -2,7 +2,7 @@
 
 import re
 import random
-from enum import Enum
+from enum import Enum, verify, UNIQUE
 from collections import Counter
 from .utils import replace_multiple, parse_num
 
@@ -42,6 +42,7 @@ def replace_platform_entities(dataset_text, dataset_mms):
             new_text_data.append((start_time, end_time, sentence, number))
         result_text[folder_name] = new_text_data
 
+        @verify(UNIQUE)
         class State(Enum):
             NOT_FOUND = 0
             GLEIS = 1
