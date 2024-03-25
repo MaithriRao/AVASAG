@@ -97,5 +97,5 @@ if __name__ == "__main__":
     dataset_mms = read_dataset_mms()
 
     result_text, result_mms = replace_platform_entities(dataset_text, dataset_mms)
-    write_dataset_text(result_text, main_folder = 'modified/platform/text')
-    write_dataset_mms(result_mms, main_folder = 'modified/platform/mms')
+    write_dataset_text(dataset_text, result_text, main_folder = 'modified/platform/text')
+    write_dataset_mms(dataset_mms, result_mms, main_folder = 'modified/platform/mms')

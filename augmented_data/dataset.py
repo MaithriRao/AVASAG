@@ -63,8 +63,11 @@ def read_dataset_mms():
     return dataset
 
 
-def write_dataset_text(dataset, main_folder):
+def write_dataset_text(original_dataset, dataset, main_folder):
     for folder_name, file_contents in dataset.items():
+        original_file_contents = original_dataset[folder_name]
+        if original_file_contents == file_contents:
+            continue
         file_folder = os.path.join(main_folder, folder_name)
         os.makedirs(file_folder, exist_ok = True)
         file_path = os.path.join(file_folder, text_file_name)
@@ -74,11 +77,14 @@ def write_dataset_text(dataset, main_folder):
                 f.write(text_line + '\n')
 
 
-def write_dataset_mms(dataset, main_folder):
+def write_dataset_mms(original_dataset, dataset, main_folder):
     fieldnames = ['maingloss', 'framestart', 'frameend', 'duration', 'transition', 'domgloss', 'ndomgloss', 'domreloc', 'ndomreloc', 'headpos', 'headmov', 'cheecks', 'nose', 'mouthgest', 'mouthing', 'eyegaze', 'eyeaperture', 'eyebrows', 'neck', 'shoulders', 'torso', 'domhandrelocx', 'domhandrelocy', 'domhandrelocz', 'domhandrelocax', 'domhandrelocay', 'domhandrelocaz', 'domhandrelocsx', 'domhandrelocsy', 'domhandrelocsz', 'domhandrotx', 'domhandroty', 'domhandrotz', 'ndomhandrelocx', 'ndomhandrelocy', 'ndomhandrelocz', 'ndomhandrelocax', 'ndomhandrelocay', 'ndomhandrelocaz', 'ndomhandrelocsx', 'ndomhandrelocsy', 'ndomhandrelocsz', 'ndomhandrotx', 'ndomhandroty', 'ndomhandrotz']
     os.makedirs(main_folder, exist_ok = True)
 
     for file_name, file_contents in dataset.items():
+        original_file_contents = original_dataset[file_name]
+        if original_file_contents == file_contents:
+            continue
         file_path = os.path.join(main_folder, file_name + '.mms')
         with open(file_path, 'w', encoding='utf-8', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
